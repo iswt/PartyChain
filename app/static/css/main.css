@@ -1,0 +1,297 @@
+html, body {
+	padding: 0;
+	margin: 0;
+}
+
+html {
+	overflow: -moz-scrollbars-vertical;
+	overflow-y: scroll;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-sarif;
+	font-size: 1.3em;
+	color: #221f1f;
+	overflow-x: hidden;
+}
+
+header {
+	height: 10px;
+	width: 100%;
+	opacity: .9;
+	margin-bottom: 10px;
+}
+
+a {
+	text-decoration: none;
+	color: #f69e46;
+}
+
+a:hover{
+	cursor: pointer;
+}
+
+hr.topbar {
+	background: #9f9f9f;
+	border: 0;
+	height: 1px;
+}
+
+h2 {
+	font-size: 3em;
+	margin-top: 40px;
+	text-align: center;
+	letter-spacing: -2px;
+}
+
+h3 {
+	font-size: 1.7em;
+	font-weight: 100;
+	margin-top: 30px;
+	text-align: center;
+	letter-spacing: -1px;
+	color: #999;
+}
+
+.day {
+	color: black;
+	background-color: white;
+}
+
+.night {
+	color: white;
+	background-color: black;
+}
+
+[draggable=true] {
+	/*cursor: move;*/
+}
+
+/*********************************************************************************************/
+/* tabs */
+
+.tabs {
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.tabs a{
+	cursor: pointer;
+	padding: 5px;
+	border: none;
+	border-bottom: none; 
+}
+
+.tabs a:hover, .tabs a.active{
+	border: none;
+	border-bottom: none;
+}
+
+.tabContent{
+	margin: 3px 0;
+	margin-bottom: 0px;
+	padding: 5px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+/*********************************************************************************************/
+/***********************************************************************/
+
+/*.send:hover,
+.issuance:hover {
+	overflow-y: auto;
+}*/
+
+.send,
+.issuance {
+	
+	width: 50%;
+	height: 83%;
+}
+
+.send {
+	z-index: 100;
+	float: left;
+	overflow: auto;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+.issuance {
+	z-index: 100;
+	float: right;
+	overflow: auto;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+.assetcolor {
+	color: #f69e46;
+}
+
+.padlock {
+	width: 35px;
+	height: auto;
+}
+
+.betarrow,
+.expiredbetarrow,
+.sendarrow,
+.creationarrow,
+.rpsarrow,
+.basearrow {
+	height: auto;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+	margin-right: 2px;
+	margin-left: 2px;
+}
+
+.betarrow {
+	width: 45px;
+}
+
+.expiredbetarrow {
+	width: 64px;
+}
+
+.sendarrow {
+	width: 35px;
+}
+
+.creationarrow {
+	width: 75px;
+}
+
+.rpsarrow {
+	width: 200px;
+}
+
+/***********************************************************************/
+
+.partychain,
+.bip38wallets {
+	display: inline;
+	width: 30%;
+	margin-bottom: 1px;
+	height: auto;
+}
+
+.partychain {
+	width: 35%;
+	margin-left: 6px;
+}
+
+.bip38wallets {
+	float: right;
+	width: 35%;
+}
+
+.blacklistall {
+	font-weight: bold;
+	font-size: 1.1em;
+	width: 20px;
+}
+
+.blacklistall:hover {
+	cursor: pointer;
+}
+
+.blacklistall,
+.redminus,
+.greenplus {
+	width: 20px;
+	height: auto;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+	margin-right: 2px;
+	margin-left: 2px;
+}
+
+.greenplus:hover,
+.redminus:hover {
+	cursor: pointer;
+}
+
+.hideasset {
+	display: inline-block;
+}
+
+.lastactiontime {
+	margin-left: 7px;
+	margin-top: 12px;
+	width: 215px;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+	float:left;
+}
+
+.lastactiontime:hover{
+	cursor: pointer;
+}
+
+.currenttime {
+	clear: both;
+	margin-left: 10px;
+	margin-top: 10px;
+	width: 435px;
+	display: inline-block;
+	float: left;
+}
+
+.blockheight {
+	display: inline-block;
+	margin-top: 10px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+/**************************************************/
+
+.mincontentbutton,
+.maxcontentbutton {
+	border-bottom: none;
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+.mincontentbutton:hover,
+.maxcontentbutton:hover {
+	cursor: pointer;
+}
+
+/**************************************************/
+
+.xlists {
+	margin-top: 3px;
+	width: 100%;
+	min-height: 35px;
+}
+
+.infotext {
+	clear: both;
+	margin-top: 15px;
+	font-size: 0.9em;
+}
+
+.chatiframe {
+	border: 0; 
+	width: 100%; 
+	height: 40%;
+}
+
+.filtertext {
+	font-size: 0.8em;
+	margin-right: 2px;
+}
+
+.daynight {
+	color: #f69e46;
+	text-decoration: none;
+}

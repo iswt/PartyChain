@@ -1,0 +1,720 @@
+<html>
+<title>PartyChain</title>
+
+<head>
+	
+	<script src="{{ url_for('static', filename='js/jquery-1.4.2.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/html5jtabs.js') }}"></script>
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+	
+	<link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+	
+	<meta name="description" content="PartyChain Counterparty Transaction Watcher" />
+	<meta property="og:type" content="article"/>
+	<meta property="og:title" content="Home"/>
+	<meta property="og:description" content="PartyChain Counterparty Transaction Watcher"/>
+	<meta property="og:url" content="https://partychain.com/"/>
+	<meta property="article:published_time" content="2014-11-11"/>
+	<meta property="article:modified_time" content="2014-11-11"/>
+	<meta property="og:site_name" content="BIP38wallets"/>
+	<meta name="twitter:card" content="summary"/>
+	
+</head>
+
+<body class="day">
+
+<script>
+
+var scrollsp = 1500;
+var issuance_scrollsp = 1500;
+
+var blacklisted_assets_arr = [];
+
+$(document).ready(function(){
+		
+		function remove_blacklist(what) {
+			$('.blacklisted_asset').each(function(index) {
+				if ($(this).text() == what) {
+					var esp = jQuery.grep(blacklisted_assets_arr, function(value) {
+						return value != what;
+					});
+					if (esp.length == 0) { 
+						$('#blacklist_list_d').html('');
+						blacklisted_assets_arr = esp;
+						return; 
+					}
+					var i = 0;
+					$('#blacklist_list_d').html(''); // clear old list
+					
+					var add_to_func_closure = function(cwhat_i) {
+						var cw = esp[cwhat_i];
+						$('#remove_black_' + cw).click(function() {
+							remove_blacklist(cw);
+						});
+					}
+					for (; i < esp.length; i++) { // append the new list
+						$('#blacklist_list_d').append(
+							'<a id="remove_black_' + esp[i] + '" class="blacklisted_asset">' + esp[i] + '</a> '
+						);
+						add_to_func_closure(i);
+					}
+					blacklisted_assets_arr = esp;
+				}
+			});
+		}
+		
+		$(".tabs a").html5jTabs();
+		
+		$('#tab2').show();
+		$('#tab1').hide();
+		
+		var waitmsg = 'Waiting on a block to parse transactions. That might take some time.Why not come to the chat by clicking the button above and hang out with us while you wait?';
+		var evmsg = 'Waiting for events';
+		
+		var excluded_asset_links = ['XCP'];
+		
+		var chatiframe = document.getElementById('chatframe');
+		chatiframe.onload = function() {
+			$('#tab2').hide(1000).delay(1000);
+			$('#datatoggle_tab2').html('Chat'); // reset the chat text to minimized state
+		};
+		chatiframe.src = 'http://webchat.freenode.net?channels=%23partychain&uio=MTE9MzE28';
+		
+		$('#daynight').hover(function() {
+			$('#daynight').css('cursor', 'pointer');
+		});
+		$('#daynight').click(function() {
+			var dorn = $('#daynight').html();
+			if (dorn == 'Day') {
+				$('#daynight').html('Night');
+				$('body').attr('class', 'day');
+				$('#biplogo').attr('src', '/static/img/bip38wallets.png');
+				$('#partychainlogo').attr('src', '/static/img/partychain_day.png');
+			} else {
+				$('#daynight').html('Day');
+				$('body').attr('class', 'night');
+				$('#biplogo').attr('src', '/static/img/bip38wallets_notrans.png');
+				$('#partychainlogo').attr('src', '/static/img/partychain_night.png');
+			}
+		});
+		
+		var socket = io.connect('http://' + document.domain + ':' + location.port + '/counterpartywatch');
+		
+		$('#lastactiontimeutc').click(function() {
+			$('#lastactiontimetz').attr('style', "display: inline-block; height: '';");
+			$('#lastactiontimeutc').attr('style', "display: none; height: 0;");
+		});
+		$('#lastactiontimetz').click(function() {
+			$('#lastactiontimeutc').attr('style', "display: inline-block; height: '';");
+			$('#lastactiontimetz').attr('style', "display: none; height: 0;");
+		});
+		
+		$('#sendfontsize').change(function(){
+			$('#send').attr('style', 'font-size: ' + $('#sendfontsize').val());
+		});
+		
+		$('#sendscrollspeed').change(function() {
+			scrollsp = parseInt($('#sendscrollspeed').val(), 10);
+		});
+		
+		$('#issuancescrollspeed').change(function() {
+			issuance_scrollsp = parseInt($('#issuancescrollspeed').val(), 10);
+		});
+		
+		$('#issuancefontsize').change(function(){
+			$('#issuance').attr('style', 'font-size: ' + $('#issuancefontsize').val());
+		});
+		
+		$('#hideasset_submit').click(function() {
+			assettohide = $('#hidden_assets').val();
+			if (assettohide == '') { return; }
+			
+			if (assettohide == 'all') {
+				var curasset = '';
+				$('#hidden_assets option').each(function() {
+					curasset = $(this).val();
+					if ($('[id=' + curasset + ']').length > 0) {
+						$('[id=' + curasset + ']').attr('style', 'display: none; height: 0px;');
+					}
+				});
+			} else {
+				if ($('[id=' + assettohide + ']').length > 0) {
+					$('[id=' + assettohide + ']').attr('style', 'display: none; height: 0px;');
+				}
+			}
+		});
+		
+		$('#unhideasset_submit').click(function() {
+			assettounhide = $('#hidden_assets').val();
+			if (assettounhide == '') { return; }
+			
+			if (assettounhide == 'all') {
+				var curasset = '';
+				$('#hidden_assets option').each(function() {
+					curasset = $(this).val();
+					if ($('[id=' + curasset + ']').length > 0) {
+						$('[id=' + curasset + ']').attr("style", "display: block; height: '';");
+					}
+				});
+			} else {
+				if ($('[id=' + assettounhide + ']').length > 0) {
+					$('[id=' + assettounhide + ']').attr("style", "display: block; height: '';");
+				}
+			}
+		});
+		
+		$('#addtoblacklist_submit').click(function() {
+			var hav = $('#hidden_assets').val();
+			var aid = "remove_black_" + hav;
+			
+			if (hav == 'all') {
+				
+				var add_to_func_closure = function(cw) {
+					$('#remove_black_' + cw).click(function() {
+						remove_blacklist(cw);
+					});
+				};
+			
+				var curv = '';
+				$('#hidden_assets option').each(function() {
+					curv = $(this).val();
+					if ($.inArray(curv, blacklisted_assets_arr) !== -1 || curv == 'all') {
+						
+					} else {
+						$('#blacklist_list_d').append(
+							'<a id="remove_black_' + curv  + '" class="blacklisted_asset">' + curv + '</a> '
+						);
+						blacklisted_assets_arr.push(curv);
+						
+						add_to_func_closure(curv);
+					}
+				});
+				return;
+			}
+			
+			if ($.inArray(hav, blacklisted_assets_arr) !== -1) {
+				return;
+			}
+			
+			$('#blacklist_list_d').append(
+				'<a id="' + aid + '" class="blacklisted_asset">' + hav + '</a> '
+			);
+			
+			blacklisted_assets_arr.push(hav);
+			
+			$('#' + aid).click(function() {
+				remove_blacklist(hav);
+			});
+		});
+		
+		$('#datatoggle_tab1').click(function() {
+			var togs = $('#datatoggle_tab1').html();
+			var tog = false;
+			var newt = 'Filters';
+			if (togs == 'Filters') {
+				tog = true;
+				newt = '-Filters';
+			} else {
+				tog = false;
+				newt = 'Filters';
+			}
+			$('#tab1').toggle(tog);
+			$('#datatoggle_tab1').html(newt);
+			$('#datatoggle_tab2').html('Chat'); // unset other tab
+			$('#datatoggle_tab3').html('Info'); // unset other tab
+			
+			
+		});
+		$('#datatoggle_tab2').click(function() {
+			var togs = $('#datatoggle_tab2').html();
+			var tog = false;
+			var newt = 'Chat';
+			if (togs == 'Chat') {
+				tog = true;
+				newt = '-Chat';
+			} else {
+				tog = false;
+				newt = 'Chat';
+			}
+			$('#tab2').toggle(tog);
+			$('#datatoggle_tab2').html(newt);
+			$('#datatoggle_tab1').html('Filters'); // unset other tab
+			$('#datatoggle_tab3').html('Info'); // unset other tab
+		});
+		$('#datatoggle_tab3').click(function() {
+			var togs = $('#datatoggle_tab3').html();
+			var tog = false;
+			var newt = 'Info';
+			if (togs == 'Info') {
+				tog = true;
+				newt = '-Info';
+			} else {
+				tog = false;
+				newt = 'Info';
+			}
+			$('#tab3').toggle(tog);
+			$('#datatoggle_tab3').html(newt);
+			$('#datatoggle_tab1').html('Filters');
+			$('#datatoggle_tab2').html('Chat');
+		});
+		
+		/* Begin socketio functions *************************************************************************************************************************************************************************************************************************/
+        socket.on('connect', function(){
+                socket.emit('new connection', {data: 'connected'});
+        });
+		
+        socket.on('new send', function(d){
+				if ($('#send').text() == waitmsg) {
+					$('#send').html(''); // clear
+				}
+				
+				var hidemod = "display: block; height: '';";
+				
+				var arewehidden = 0;
+				if ($.inArray(d.asset, blacklisted_assets_arr) !== -1) {
+					arewehidden = 1;
+					hidemod = 'display: none; height: 0px;';
+				}
+				
+				var dtime = d.tx_hash;
+				
+				var frand = 1 + Math.floor(Math.random() * 1000);
+				var trand = 2 + Math.floor(Math.random() * 1000);
+				
+				var to_spanid = 'send_' + dtime + '_' + d.toaddress + '_' + trand;
+				var from_spanid = 'send_' + dtime + '_' + d.fromaddress + '_' + frand;
+				
+				var display_fromaddress = '<span id="' + from_spanid + '">' + d.fromaddress + '</span>';
+				var display_toaddress ='<span id="' + to_spanid + '">' +  d.toaddress + '</span>';
+				
+				var asset_disp = '';
+				if ($.inArray(d.asset, excluded_asset_links) !== -1) {
+					asset_disp = d.asset;
+				} else {
+					asset_disp = '<a href="http://blockscan.com/assetInfo.aspx?q=' + d.asset + '" target=_blank">' + d.asset + '</a>';
+				}
+				
+				$('#send').append(
+					'<div id="' + d.asset + '" style="' + hidemod + '">' +
+					'<center><i>' + d.amount + '</i> <b class="assetcolor">' + 
+					asset_disp +
+					'</b><br />' + 
+					display_fromaddress + ' <a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + 
+					'" target="_blank"><img src="/static/img/arrow_right_green.png" title="Send: ' + d.tx_hash + '" class="sendarrow"></a> ' 
+					+ display_toaddress + '<br />' + 
+					'' + 
+					'</center><br /></div>'
+				);
+				
+				if (arewehidden == 0){
+					$('#send').animate({ scrollTop: $('#send')[0].scrollHeight }, scrollsp);
+				}
+				// add asset to hidden list ( do this in an else {} if you only want to add assets as they're hidden )
+				var atl = true;
+				$('#hidden_assets option').each(function() {
+					if ($(this).val() == d.asset) {
+						atl = false;
+					}
+				});
+				if (atl == true) {
+					$('#hidden_assets').append(
+						$("<option></option>").attr("value", d.asset).text(d.asset)
+					);
+				}
+        });
+
+        socket.on('new issuance', function(d){
+				
+				if ($('#issuance').text() == evmsg) {
+					$('#issuance').html(''); // clear
+				}
+				
+				var dtime = d.tx_hash;
+				var trand = 1 + Math.floor(Math.random() * 1000);
+				var action_spanid = 'action_' + dtime + '_' + d.actionaddress + '_' + trand;
+				
+				var actionaddress = '<span id="' + action_spanid + '" title="' + d.actionaddress + '">' + d.actionaddress + '</span>';
+				
+				var asset_disp = '';
+				if ($.inArray(d.issue_asset, excluded_asset_links) !== -1) {
+					asset_disp = d.issue_asset;
+				} else {
+					asset_disp = '<a href="http://blockscan.com/assetInfo.aspx?q=' + d.issue_asset + '" target="_blank">' + d.issue_asset + '</a>' ;
+				}
+				
+				$('#issuance').append(
+					'<center><b>' + actionaddress + 
+					'</b> <a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/creation.png" class="creationarrow" title="Issuance: ' + d.tx_hash + '"></a>' + 
+					' <b  class="assetcolor">' + 
+					asset_disp +
+					'</b> (' + d.issue_amount + ')' + '<br />' + 
+					d.divisibility + ' | ' + d.callability + 
+					'<br />' + d.description + '</center><br />'
+				);
+				
+				$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+        });
+		
+		socket.on('new bet', function(d){
+			
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			var dtime = d.tx_hash;
+			var drand = 1 + Math.floor(Math.random() * 1000);
+			var brand = 2 + Math.floor(Math.random() * 1000);
+			
+			var on_spanid = 'bet_' + dtime + '_' + d.on_address + '_' + drand;
+			var better_spanid = 'bet_' + dtime + '_' + d.better_address + '_' + brand;
+			
+			var on_disp_address = '<span id="' + on_spanid + '" title="' + d.on_address + '">' + d.on_address + '</span>';
+			var better_disp_address = '<span id="' + better_spanid + '" title="' + d.better_address + '">' + d.better_address + '</span>';
+			
+			var bet_asset_disp = '';
+			var against_asset_disp = '';
+			if ($.inArray(d.bet_asset, excluded_asset_links) !== -1) {
+				bet_asset_disp = d.bet_asset;
+			} else {
+				bet_asset_disp = '<a href="http://blockscan.com/assetInfo.aspx?q=' + d.bet_asset + '" target="_blank">' + d.bet_asset + '</a>' ;
+			}
+			
+			if ($.inArray(d.against_asset, excluded_asset_links) !== -1) {
+				against_asset_disp = d.against_asset;
+			} else {
+				against_asset_disp = '<a href="http://blockscan.com/assetInfo.aspx?q=' + d.against_asset + '" target="_blank">' + d.against_asset + '</a>';
+			}
+			
+			$('#issuance').append(
+				'<div id="' + d.tx_hash + '">' +
+				'<center><i>' + d.bet_amount + '</i> <b class="assetcolor">' + 
+				bet_asset_disp +
+				'</b>  against <i>' + 
+				d.against_amount + '</i> <b>' + 
+				against_asset_disp +
+				'</b> [' + d.validity + ']<br />' +
+				better_disp_address + ' <a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + 
+				'" target="_blank"><img src="/static/img/bet_white.png" class="betarrow" title="Bet: ' + d.tx_hash + '"></a> ' + on_disp_address + '<br />' +
+				'<a href="http://' + d.feed_url + '" target="_blank">feed</a>' + ' <b>' + d.operator + '</b> <i>' + d.operator_amount + '</i> <br />' +
+				'at ' + d.bet_timestamp + ' (' + d.in_blocks + ' blocks)' + 
+				'</center><br />' +
+				'</div>'
+			);
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+		
+		socket.on('expired bet', function(d){
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			$('#issuance').append(
+				'<center>' +
+				'<a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/expired.png" class="expiredbetarrow" title="Expired bet: ' + d.tx_hash + '"></a> ' + d.tx_hash +
+				'</center><br />'
+			);
+			
+			$('#' + d.tx_hash).attr('style', 'text-decoration: line-through;');
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+		
+		/* RPS ******************************************************************************************************************/
+		socket.on('new rps', function(d) {
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			var dtime = d.starter_address + d.wager_asset + d.possible_moves;
+			var trand = 1 + Math.floor(Math.random() * 1000);
+			var trandt = 3 + Math.floor(Math.random() * 1000);
+			var starter_spanid = 'rps_' + dtime + '_' + d.actionaddress + '_' + trand + trandt;
+			
+			var starter_disp_address = '<span id="' + starter_spanid + '" title="' + d.starter_address + '">' + d.starter_address + '</span>';
+			
+			var asset_disp = '';
+			if ($.inArray(d.wager_asset, excluded_asset_links) !== -1) {
+				asset_disp = d.wager_asset;
+			} else {
+				asset_disp = '<a href="http://blockscan.com/assetInfo.aspx?q=' + d.wager_asset + '" target="_blank">' + d.wager_asset + '</a>';
+			}
+			
+			$('#issuance').append(
+				'<div id="' + d.starter_address + '">' + 
+				'<center>' + starter_disp_address + 
+				'<img src="/static/img/rps.png" title="Rock Paper Scissors with ' + d.starter_address + '" class="rpsarrow">' +
+				'<i>' + d.wager_amount + '</i> <b class="assetcolor">' + 
+				asset_disp +
+				'</b> (' + d.possible_moves + ')' +
+				'</center><br />' + 
+				'</div>'
+			);
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+		
+		socket.on('rps match', function(d) {
+			
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			var asset_disp = '';
+			if ($.inArray(d.wager_asset, excluded_asset_links) !== -1) {
+				asset_disp = d.wager_asset;
+			} else {
+				asset_disp = '<a href="http://blockscan.com/assetInfo.aspx?q=' + d.wager_asset + '" target="_blank">' + d.wager_asset + '</a>';
+			}
+			
+			$('#issuance').append(
+				'<div id="' + d.tx_hash + '">' + 
+				'<center>' + 
+				'<a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/rps.png" title="RPS Match: ' + 
+					d.tx_hash + '" class="rpsarrow"></a> <i>' +
+				d.wager_amount + '</i> <b>' +
+				asset_disp +
+				'</b> (' + d.possible_moves + ' possible moves)' + ' [' + d.state + ']' + '<br />' + 
+				d.counterparty_address + 
+				' &nbsp;<b>VS.</b>&nbsp; ' + 
+				d.starter_address +  
+				'</center><br />' + 
+				'</div>'
+			);
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+		
+		socket.on('rps resolved', function(d) {
+			
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			if (typeof d.starter_address === "undefined") {
+				// tx_hash and state
+				$('#issuance').append(
+					'<center>Resolved <a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/rps.png" title="RPS Resolved: ' + 
+						d.tx_hash + '" class="rpsarrow"></a>' + '<br />' +
+					d.state +
+					'</center><br />'
+				);
+				
+				$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, scrollsp);
+			} else {
+				var dtime = d.tx_hash;
+				var trand = 1 + Math.floor(Math.random() * 1000);
+				var counterparty_spanid = 'rpsresolved_' + dtime + '_' + trand;
+				var counterparty_disp_address = '<span id="' + counterparty_spanid + '" title="' + d.counterparty_address + '">' + d.counterparty_address  + '</span>';
+				$('#issuance').append(
+					'<center>' + 
+					'<b>' + counterparty_disp_address + '</b> plays ' +
+					'<a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/' + d.counterparty_move_text + '.png" title="RPS Resolved: ' + 
+						d.tx_hash + '" class="rpsarrowsingle"></a><br />'  +
+					'</center><br />'
+				);
+				
+				$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+			}
+		});
+		
+		socket.on('rps expired', function(d) {
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			$('#issuance').append(
+				'<center>Expired ' + 
+				'<a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/expiredrps.png" title="Expired RPS: ' + d.tx_hash + '" class="rpsarrow"></a> <i>' + 
+				'</center><br />'
+			);
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+		
+		socket.on('rps expiredmatch', function(d) {
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			$('#issuance').append(
+				'<center>Expired ' + 
+				'<a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/expiredrps.png" title="Expired RPS Match: ' + d.tx_hash + '" class="rpsarrow"></a> <i>' + 
+				'</center><br />'
+			);
+			
+			$('#' + d.tx_hash).attr('style', 'text-decoration: line-through;');
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+		
+		/* *************************************************************************************************************************/
+		socket.on('new lock', function(d){
+			if ($('#issuance').text() == evmsg) {
+				$('#issuance').html(''); // clear
+			}
+			
+			$('#issuance').append(
+				'<center><b>' + d.actionaddress + 
+				'</b> <a href="http://blockscan.com/tx.aspx?txhash=' + d.tx_hash + '" target="_blank"><img src="/static/img/lock.png" title="Locked asset: ' 
+					+ d.tx_hash + '" class="padlock"></a> <b>' + 
+				'<a href="http://blockscan.com/assetInfo.aspx?q=' + d.locked_asset  + '" target="_blank">' + d.locked_asset + '</a>' +
+				'</b></center><br />'
+			);
+			
+			$('#issuance').animate({ scrollTop: $('#issuance')[0].scrollHeight }, issuance_scrollsp);
+		});
+
+        socket.on('new block', function(blockdata){
+                $('#blockheight').html(blockdata.blockheight);
+        });
+		
+		socket.on('new actiontime', function(d) {
+			$('#lastactiontimeutc').html(d.timestamp_utc);
+			$('#lastactiontimetz').html(d.timestamp_tz);
+			
+		});
+		
+		socket.on('new currenttime', function(d) {
+			$('#currenttime').html(
+				d.current_timestamp
+			);
+		});
+		/*End socketio functions *************************************************************************************************************************************************************************************************************************/
+});
+</script>
+
+<div id="lastactiontimeutc" class="lastactiontime">No data yet</div>
+<div id="lastactiontimetz" class="lastactiontime" style="display: none; height: 0;">No data yet</div>
+
+<div class="tabs">
+	&nbsp;&nbsp;|
+	<div id="blockheight" class="blockheight">0</div>
+	|&nbsp;&nbsp;
+	<span id="daynight" value="day" class="daynight">Night</span>
+	<a id="datatoggle_tab1" data-toggle="tab1" style="border-bottom:none;">Filters</a>
+	<a id="datatoggle_tab2" data-toggle="tab2" style="border-bottom:none;">-Chat</a>
+	<a id="datatoggle_tab3" data-toggle="tab3" style="border-bottom:none;">Info</a>
+	<span style="float: right; display: inline; margin-right: 10px; margin-top: 10px;">Please visit our site sponsor</span>
+</div>
+
+<div id="imglogos">
+	<a href="https://bip38wallets.com" target="_blank">
+		<img id="biplogo" src="/static/img/bip38wallets.png" class="bip38wallets" title="BIP38wallets">
+	</a>
+	<img id="partychainlogo" src="/static/img/partychain_day.png" class="partychain" title="ON the Chain!">
+</div>
+
+<div class="tabContent" style="margin-left: 5px;">
+	
+	<b id="tab1">
+	
+	<span style="margin-bottom: 2px; margin-top: 2px;">Transactions</span>
+	<span style="float: right;">Issuances</span>
+	<br />
+	
+		<span class="filtertext">font size: </span>
+		<select id="sendfontsize" style="clear: both;">
+			<option value="0.7em;">-3</option>
+			<option value="0.8em;">-2</option>
+			<option value="0.9em;">-1</option>
+			<option value="1.0em;" selected="selected">0</option>
+			<option value="1.1em;">1</option>
+			<option value="1.2em;">2</option>
+			<option value="1.3em;">3</option>
+			<option value="1.4em;">4</option>
+			<option value="1.5em;">5</option>
+			<option value="1.6em;">6</option>
+			<option value="1.7em;">7</option>
+			<option value="1.8em;">8</option>
+			<option value="1.9em;">9</option>
+			<option value="2.0em;">10</option>
+		</select>
+		<span class="filtertext">scroll speed: </span>
+		<select id="sendscrollspeed" style="display: inline-block; width: 75px;">
+			<option value=1500 selected="selected">0</option>
+			<option value=550>1</option>
+			<option value=450>2</option>
+			<option value=350>3</option>
+			<option value=0>instant baby</option>
+		</select>
+	
+		<div id="issuanceoptions" style="float: right;">
+			<span class="filtertext">scroll speed: </span>
+			<select id="issuancescrollspeed" style="width: 75px;">
+				<option value=1500 selected="selected">0</option>
+				<option value=550>1</option>
+				<option value=450>2</option>
+				<option value=350>3</option>
+				<option value=0>instant baby</option>
+			</select>
+			<span class="filtertext">font size: </span>
+			<select id="issuancefontsize" style="clear: both;">
+				<option value="0.7em;">-3</option>
+				<option value="0.8em;">-2</option>
+				<option value="0.9em;">-1</option>
+				<option value="1.0em;" selected="selected">0</option>
+				<option value="1.1em;">1</option>
+				<option value="1.2em;">2</option>
+				<option value="1.3em;">3</option>
+				<option value="1.4em;">4</option>
+				<option value="1.5em;">5</option>
+				<option value="1.6em;">6</option>
+				<option value="1.7em;">7</option>
+				<option value="1.8em;">8</option>
+				<option value="1.9em;">9</option>
+				<option value="2.0em;">10</option>
+			</select>
+		</div>
+		<br />
+		<span class="filtertext">asset selection: </span>
+		<select id="hidden_assets" type="text" style="width: 90px">
+			<option value="all" selected="selected">all</option>
+		</select>
+		
+		<input id="hideasset_submit" type="submit" value="hide">
+		<input id="unhideasset_submit" type="submit" value="unhide">
+		<input id="addtoblacklist_submit" type="submit" value="+ blacklist">
+		
+		<br />
+		<div id="hideasset" class="hideasset">
+			<div id="blacklist_list" class="xlists">
+				<span style="font-size: 0.8em;">current blacklist (click to remove):</span>
+				<div id="blacklist_list_d"></div>
+			</div>
+		</div>
+	</b>
+	<b id="tab2">
+		<iframe id="chatframe" src="" class="chatiframe"></iframe>
+	</b>
+	<b id="tab3">
+		<div style="margin-left: 25%; margin-right: 25%;">
+			<center><span style="font-size: 1.0em;">PartyChain Information</span></center>
+			<br />
+			<span style="font-size: 0.9em;">PartyChain is a CounterParty blockchain watcher that parses transaction data into the left window, and asset issuance (creation, locking), bets, and RPS (rock, paper, scissors) into the right window. You can use the filters to display only particular asset transactions, or filter out anything you don't want to include. The page updates automatically as new bitcoin blocks are received and parsed.
+			<br /><br />
+			We built this tool for ourselves, but thought others might enjoy it as well. We plan to bring more functionality over time. Please contact us if you have comments or suggestions at <a href="mailto:contact@partychain.com" style="font-size: 1em;">contact@partychain.com</a></span>
+			<br />
+		
+		
+			<div class="infotext">
+				PartyChain is open source. You can run a version of this locally if you have counterpartyd &amp; the resources to do so. You can view the code on our github page: <a href="https://github.com/iswt/PartyChain" target="_blank">https://github.com/iswt/PartyChain</a>
+				<br /><br />
+				If you like this service and want to make a donation, or just want to see your asset scroll across the screen, we gratefully accept Bitcoin &amp; Counterparty Asset donations at: 
+				<br />
+				<center><span style="font-size: 1.3em; font-weight: bold; color: #f69e46;">1HsooaskgFks223d63YwMBN6BsgJmf1Wzz</span></center>
+			</div>
+		</div>
+	<b>
+</div>
+
+<hr style="clear: both; background: #898989; border: 0; height: 3px;" />
+
+<div id="send" class="send" value="blank"><center>Waiting on a block to parse transactions. That might take some time.<br /><br />Why not come to the chat by clicking the button above and hang out with us while you wait?</center></div>
+
+<div id="issuance" class="issuance"><center>Waiting for events</center></div>
+
+<br style="clear: both;" />
+
+</body>
+</html>
